@@ -28,25 +28,32 @@ export default function Home() {
     getChips(id).then(setChips).catch(console.error)
   }, [])
 
-  async function buy200() {
-    try {
-      const newBal = await apiBuyChips({ clientId, amount: 200 })
-      setChips(newBal)
-    } catch (e) {
-      console.error(e)
+  // Refresh chips when chips are purchased from navbar dialog
+  useEffect(() => {
+    const refreshChips = () => {
+      if (clientId) {
+        getChips(clientId).then(setChips).catch(console.error)
+      }
     }
-  }
+
+    // Listen for custom chip update event
+    window.addEventListener('chipsUpdated', refreshChips)
+    // Also listen for window focus as backup
+    window.addEventListener('focus', refreshChips)
+    
+    return () => {
+      window.removeEventListener('chipsUpdated', refreshChips)
+      window.removeEventListener('focus', refreshChips)
+    }
+  }, [clientId])
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6">
-      <h1 className="text-4xl font-bold text-white mb-6">
-        Blackjack
-      </h1>
+    <main className="flex min-h-full flex-col items-center justify-center gap-6">
+      <h1 className="text-4xl font-bold text-white my-6">Blackjack</h1>
 
       <div className="text-center space-y-2">
         <p className="text-lg">Client ID: <code>{clientId}</code></p>
         <p className="text-2xl font-semibold">Chips: {chips}</p>
-        <Button onClick={buy200}>Buy +200</Button>
       </div>
 
       <AlertDialog>
