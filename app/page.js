@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
+import { getClientId, getChips, apiBuyChips } from '@/lib/storage'
+
 import {
 AlertDialog,
   AlertDialogAction,
@@ -13,10 +15,11 @@ AlertDialog,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import { getClientId, getChips, apiBuyChips } from '@/lib/storage'
 
 export default function Home() {
+  // clientId stores unique id per browser. setClientId is inbuilt React state setter
   const [clientId, setClientId] = useState('')
+  // chips stores current balance of chips from DB. setChips is inbuilt React state setter
   const [chips, setChips] = useState(0)
 
   useEffect(() => {
@@ -37,7 +40,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6">
       <h1 className="text-4xl font-bold text-white mb-6">
-        🎉 Tailwind + shadcn/ui + Supabase are Working!
+        Blackjack
       </h1>
 
       <div className="text-center space-y-2">
