@@ -26,12 +26,31 @@ export default function Navbar() {
   const [clientId, setClientId] = useState('')
   const [chips, setChips] = useState(0)
 
+    // On mount, get client ID and initial chips
   useEffect(() => {
     const id = getClientId()
     setClientId(id)
     getChips(id).then(setChips).catch(console.error)
   }, [])
 
+  // Listen for chip updates from game or other sources
+  useEffect(() => {
+    const refreshChips = () => {
+      if (clientId) {
+        getChips(clientId).then(setChips).catch(console.error)
+      }
+    }
+    // Listen for custom chip update event or window focus (backup)
+    window.addEventListener('chipsUpdated', refreshChips)
+    window.addEventListener('focus', refreshChips)
+    
+    return () => {
+      window.removeEventListener('chipsUpdated', refreshChips)
+      window.removeEventListener('focus', refreshChips)
+    }
+  }, [clientId]) // React rule: If effect uses a variable, it must be in dependency array
+
+    // Navigation items
   const navItems = [
     { href: '/', label: 'Home' },
     { href: '/history', label: 'History' },
@@ -42,22 +61,25 @@ export default function Navbar() {
     <nav className="px-5 py-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-6">
-            {/* Logo/Brand */}
+            {/* Website Logo/ Name */}
             <Link href="/" className="text-xl font-bold text-white">
                 Blackjack
             </Link>
             
             {/* Buy more chips button */}
-            <Button 
-              variant="badge" 
-              onClick={() => setIsBuyDialogOpen(true)}
-            >
+            <Button variant="badge" onClick={() => setIsBuyDialogOpen(true)}>
               Balance {chips}
             </Button>
         </div>
         
 
-        {/* Desktop Navigation - Hidden on mobile */}
+        {/* 
+          DESKTOP NAVIGATION 
+          - Shows horizontal buttons on screens ≥768px (md breakpoint)
+          - Hidden on mobile with "hidden" class (display: none by default)  
+          - "md:block" overrides hidden on medium+ screens (display: block)
+          - "md:items-center md:space-x-3" adds flexbox alignment and spacing on desktop
+        */}
         <div className="hidden md:block md:items-center md:space-x-3">
           {navItems.map((item) => (
             <Button key={item.href} variant="badge" asChild>
@@ -66,20 +88,37 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Mobile Burger Menu - Hidden on desktop */}
+        {/* 
+          MOBILE BURGER MENU
+          - Shows hamburger menu on screens <768px (mobile)
+          - "md:hidden" hides this entire section on desktop screens ≥768px
+          - Uses Sheet component for slide-out drawer navigation
+        */}
         <div className="md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="text-white">
+                {/* Menu icon from Lucide React (hamburger lines) */}
                 <Menu className="h-6 w-6" />
+                {/* Screen reader text for accessibility */}
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
+            
             <SheetContent side="right" className="w-[300px]">
+              {/* Header section of the drawer */}
               <SheetHeader className={"text-lg"}>
                 <SheetTitle>Navigation</SheetTitle>
               </SheetHeader>
+              
+              {/* 
+                Navigation links container
+                - flex-col: Stack links vertically
+                - space-y-4: 16px vertical spacing between links
+                - mt-6: 24px top margin
+              */}
               <div className="flex flex-col space-y-4 mt-6">
+                {/* Loop for each link */}
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
@@ -87,7 +126,7 @@ export default function Navbar() {
                     className="text-s text-white mx-4 font-medium hover:text-primary transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
-                    {item.label}
+                    {item.label} 
                   </Link>
                 ))}
               </div>
