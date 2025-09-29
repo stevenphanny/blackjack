@@ -9,7 +9,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-white text-black",
+        default: "bg-white text-black rounded-full px-4 py-1 m-1",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
@@ -19,7 +19,7 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
-        badge: "bg-primary text-white rounded-full px-4 py-1 text-xs font-semibold hover:bg-primary/90 focus-visible:ring-primary/20",
+        badge: "bg-primary text-white rounded-full px-4 py-1 m-1 text-xs font-semibold hover:bg-primary/90 focus-visible:ring-primary/20",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
