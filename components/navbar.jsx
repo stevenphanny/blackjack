@@ -84,7 +84,7 @@ export default function Navbar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="text-s text-black mx-4 font-medium hover:text-primary transition-colors"
+                    className="text-s text-white mx-4 font-medium hover:text-primary transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
                     {item.label}
