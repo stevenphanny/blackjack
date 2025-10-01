@@ -29,7 +29,6 @@ export async function GET(request) {
         { status: 400 }
       )
     }
-
     // Create Supabase client with server-side credentials
     const supabase = supabaseServer()
 
@@ -39,7 +38,6 @@ export async function GET(request) {
       .select('*')                               // Select all columns
       .eq('user_id', clientId)                   // Filter by user_id (stored when game is settled)
       .order('created_at', { ascending: false }) // Newest games first
-      .limit(50)                                 // Limit to 50 games for performance
 
 
     // Handle database query errors
