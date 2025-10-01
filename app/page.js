@@ -260,6 +260,8 @@ export default function Home() {
 
       {/* Betting or Actions */}
       {phase === 'BETTING' ? (
+        <>
+        {/* Input box for betting chips */}
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -268,13 +270,17 @@ export default function Home() {
             onChange={e => setBet(Math.max(1, Number(e.target.value)))}
             className="w-24 px-2 py-1 rounded border border-neutral-700 bg-neutral-900 text-white"
           />
-          <Button onClick={deal}>Deal</Button>
-          <div className="flex gap-1">
-            {[5,10,25,50,100].map(v => (
-              <Button key={v} onClick={() => setBet(Math.min(v, chips))}>{v}</Button>
-            ))}
-          </div>
         </div>
+
+        {/* Bet buttons */}
+        <Button onClick={deal}>Deal</Button>
+        <div className="flex gap-1">
+          {[5,10,25,50,100].map(v => (
+            <Button variant="bet_numbers" key={v} onClick={() => setBet(Math.min(v, chips))}>+{v}</Button>
+          ))}
+        </div>
+        </>
+
       ) : phase === 'FINISHED' ? (
         <div className="flex gap-2">
           <Button onClick={newGame}>New Game</Button>

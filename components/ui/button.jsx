@@ -9,7 +9,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-white text-black rounded-full px-4 py-1 m-1 w-max",
+        default: "bg-white text-black rounded-full px-4 py-1 m-1",
+        bet_numbers: "bg-white text-black rounded-full px-4 py-1 w-13 font-semibold",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
