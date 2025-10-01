@@ -27,7 +27,7 @@ export default function Home() {
   const [phase, setPhase] = useState('BETTING') // BETTING | PLAYER | DEALER | FINISHED
   const [player, setPlayer] = useState([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])      // Start with placeholder cards
   const [dealer, setDealer] = useState([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])      // Start with placeholder cards
-  const [msg, setMsg] = useState('Place a bet and deal to start.')
+  const [msg, setMsg] = useState('')
   
   // Animation states
   const [newCardIndices, setNewCardIndices] = useState({ player: [], dealer: [] })
@@ -115,7 +115,6 @@ export default function Home() {
       setNewCardIndices({ player: [], dealer: [] })
     }, 600)
     
-    setMsg('Your turn. Hit or Stand?')
     setPhase('PLAYER')
   }
 

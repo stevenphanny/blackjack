@@ -184,7 +184,7 @@ export default function HistoryPage() {
       {/* Game History Header with navigation and title */}
       <div className="w-full max-w-2xl mb-6">
         <Link href="/">
-          <Button variant="outline" className="mb-4">
+          <Button variant="default" className="mb-4">
             ← Back to Game
           </Button>
         </Link>
