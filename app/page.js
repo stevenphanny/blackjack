@@ -24,14 +24,25 @@ export default function Home() {
 
   // Game state
   const [bet, setBet] = useState(10)
-  const [phase, setPhase] = useState('BETTING') // BETTING | PLAYER | DEALER
-  const [player, setPlayer] = useState([])      // array of cards
-  const [dealer, setDealer] = useState([])      // array of cards
+  const [phase, setPhase] = useState('BETTING') // BETTING | PLAYER | DEALER | FINISHED
+  const [player, setPlayer] = useState([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])      // Start with placeholder cards
+  const [dealer, setDealer] = useState([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])      // Start with placeholder cards
   const [msg, setMsg] = useState('Place a bet and deal to start.')
+  
+  // Animation states
+  const [newCardIndices, setNewCardIndices] = useState({ player: [], dealer: [] })
+  const [revealDealerCard, setRevealDealerCard] = useState(false)
 
-  // Memoized totals to avoid unnecessary recalculations
-  const pTotal = useMemo(() => calcHandTotal(player).total, [player]) // player dependency - only recalculates if player changes
-  const dTotal = useMemo(() => calcHandTotal(dealer).total, [dealer]) // dealer dependency - only recalculates if dealer changes
+  // Memoized totals to avoid unnecessary recalculations - only calculate if cards are real
+  const pTotal = useMemo(() => {
+    if (phase === 'BETTING') return 0
+    return calcHandTotal(player).total
+  }, [player, phase])
+  
+  const dTotal = useMemo(() => {
+    if (phase === 'BETTING') return 0
+    return calcHandTotal(dealer).total
+  }, [dealer, phase])
 
 
   // Initialise: get client id & load chips
@@ -56,25 +67,73 @@ export default function Home() {
   // ---- Game actions ----
 
   /**
-   * Deals the cards to start a new round
+   * Starts a new game by resetting to betting phase with placeholder cards
+   * @returns {void}
+   */
+  function newGame() {
+    setPhase('BETTING')
+    setPlayer([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])
+    setDealer([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])
+    setMsg('Place a bet and deal to start.')
+    setRevealDealerCard(false)
+    setNewCardIndices({ player: [], dealer: [] })
+  }
+
+  /**
+   * Deals the cards to start a new round in classic blackjack sequence:
+   * 1st card: Player (visible)
+   * 2nd card: Dealer (visible) 
+   * 3rd card: Player (visible)
+   * 4th card: Dealer (hidden)
    * @returns {void}
    */
   function deal() {
     if (phase !== 'BETTING') return
     if (bet < 1) return setMsg('Bet must be at least 1.')
     if (bet > chips) return setMsg('Bet exceeds your chip balance.')
-    const p = [drawCard(), drawCard()]
-    const d = [drawCard()] // dealer shows one card
+    
+    // Reset animation states
+    setRevealDealerCard(false)
+    setNewCardIndices({ player: [], dealer: [] })
+    
+    // Classic blackjack dealing sequence
+    const card1 = drawCard() // Player's 1st card (visible)
+    const card2 = drawCard() // Dealer's 1st card (visible)
+    const card3 = drawCard() // Player's 2nd card (visible)
+    const card4 = drawCard() // Dealer's 2nd card (face down)
+    
+    const p = [card1, card3]
+    const d = [card2, card4]
     setPlayer(p)
     setDealer(d)
+    
+    // Trigger animations for new cards
+    setNewCardIndices({ player: [0, 1], dealer: [0, 1] })
+    
+    // Clear animation states after animation completes
+    setTimeout(() => {
+      setNewCardIndices({ player: [], dealer: [] })
+    }, 600)
+    
     setMsg('Your turn. Hit or Stand?')
     setPhase('PLAYER')
   }
 
   function hit() {
     if (phase !== 'PLAYER') return
-    const next = [...player, drawCard()]
+    const newCard = drawCard()
+    const next = [...player, newCard]
     setPlayer(next)
+    
+    // Animate the new card
+    const newIndex = next.length - 1
+    setNewCardIndices(prev => ({ ...prev, player: [newIndex] }))
+    
+    // Clear animation after it completes
+    setTimeout(() => {
+      setNewCardIndices(prev => ({ ...prev, player: [] }))
+    }, 600)
+    
     const t = calcHandTotal(next).total
     if (t > 21) {
       setMsg('Bust! Dealer wins.')
@@ -85,11 +144,31 @@ export default function Home() {
   function stand() {
     if (phase !== 'PLAYER') return
     setPhase('DEALER')
-    const finalDealer = dealerAutoPlay(dealer)
-    setDealer(finalDealer)
-    const result = resolveResult(player, finalDealer)
-    setMsg(result === 'win' ? 'You win!' : result === 'loss' ? 'You lose.' : 'Push.')
-    finish(result, player, finalDealer)
+    
+    // Reveal dealer's hidden card with animation
+    setRevealDealerCard(true)
+    
+    setTimeout(() => {
+      const finalDealer = dealerAutoPlay(dealer)
+      setDealer(finalDealer)
+      
+      // Animate any additional dealer cards
+      if (finalDealer.length > dealer.length) {
+        const newIndices = []
+        for (let i = dealer.length; i < finalDealer.length; i++) {
+          newIndices.push(i)
+        }
+        setNewCardIndices(prev => ({ ...prev, dealer: newIndices }))
+        
+        setTimeout(() => {
+          setNewCardIndices(prev => ({ ...prev, dealer: [] }))
+        }, 600)
+      }
+      
+      const result = resolveResult(player, finalDealer)
+      setMsg(result === 'win' ? 'You win!' : result === 'loss' ? 'You lose.' : 'Push.')
+      finish(result, player, finalDealer)
+    }, 300) // Small delay for card reveal
   }
 
   async function finish(result, finalPlayer, finalDealer) {
@@ -121,7 +200,7 @@ export default function Home() {
     } catch (e) {
       console.error(e)
     } finally {
-      setPhase('BETTING')
+      setPhase('FINISHED')
     }
   }
 
@@ -138,26 +217,46 @@ export default function Home() {
       {/* Title */}
       <h1 className="text-4xl font-bold text-white my-6">Blackjack</h1>
       
-      {/* Dealer table */}
-      <section className="max-w-xl rounded-2xl border border-neutral-800 p-4">
-        <div className="text-sm opacity-80 mb-2">
-          Dealer {phase !== 'PLAYER' && `Total: ${dTotal}`}
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {dealer.map((c, i) => (
-            <Card key={`d-${i}`} c={c} hidden={phase === 'PLAYER' && i === 0} />
-          ))}
-        </div>
-      </section>
-      
-      {/* Player table */}
-      <section className="w-50 max-w-xl rounded-2xl p-4">
-        <div className="text-sm opacity-80 mb-2">You: {pTotal}</div>
-        <div className="flex gap-2 flex-wrap">
-          {player.map((c, i) => <Card key={`p-${i}`} c={c} />)}
-        </div>
-      </section>
+      {/* Always show dealer and player sections */}
+      <>
+        {/* Dealer section */}
+        <section className="max-w-xl rounded-2xl p-4">
+          <div className="flex gap-2 flex-wrap">
+            {dealer.map((c, i) => (
+              <Card 
+                key={`d-${i}`} 
+                c={c} 
+                hidden={phase === 'BETTING' || (phase === 'PLAYER' && i === 1 && !revealDealerCard)} 
+                isNew={newCardIndices.dealer.includes(i)}
+                isRevealing={i === 1 && revealDealerCard && phase === 'DEALER'}
+                isPlaceholder={phase === 'BETTING'}
+              />
+            ))}
+          </div>
+          <div className="flex justify-center mt-4">
+            <Button variant="default" disabled>{(phase === 'DEALER' || phase === 'FINISHED') ? `Dealer Total: ${dTotal}` : "Dealer"}</Button>
+          </div>
 
+        </section>
+
+        {/* Player section */}
+        <section className="max-w-xl rounded-2xl p-4">
+          <div className="flex gap-2 flex-wrap">
+            {player.map((c, i) => (
+              <Card 
+                key={`p-${i}`} 
+                c={c} 
+                hidden={phase === 'BETTING'}
+                isNew={newCardIndices.player.includes(i)}
+                isPlaceholder={phase === 'BETTING'}
+              />
+            ))}
+          </div>
+          <div className="flex justify-center mt-4">
+            <Button variant="default" disabled>{(phase === 'PLAYER' || phase === 'DEALER' || phase === 'FINISHED') ? `You: ${pTotal}` : "You"}</Button>
+          </div>
+        </section>
+      </>
 
       {/* Betting or Actions */}
       {phase === 'BETTING' ? (
@@ -172,51 +271,43 @@ export default function Home() {
           <Button onClick={deal}>Deal</Button>
           <div className="flex gap-1">
             {[5,10,25,50,100].map(v => (
-              <Button key={v} variant="outline" onClick={() => setBet(Math.min(v, chips))}>{v}</Button>
+              <Button key={v} onClick={() => setBet(Math.min(v, chips))}>{v}</Button>
             ))}
           </div>
+        </div>
+      ) : phase === 'FINISHED' ? (
+        <div className="flex gap-2">
+          <Button onClick={newGame}>New Game</Button>
         </div>
       ) : (
         <div className="flex gap-2">
           <Button onClick={hit}>Hit</Button>
-          <Button variant="outline" onClick={stand}>Stand</Button>
+          <Button onClick={stand}>Stand</Button>
         </div>
       )}
 
-      
-
       <div className="text-sm opacity-80">{msg}</div>
-
-      {/* Your existing dialog demo */}
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button variant="outline">Show Dialog</Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your account
-              and remove your data from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction>Continue</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </main>
   )
 }
 
-// Minimal card UI; hide dealer's first card during player's turn
-function Card({ c, hidden }) {
-  if (hidden) {
-    return <div className="w-14 h-20 rounded bg-neutral-700 border border-neutral-600" />
+// Card UI with animations for dealing and revealing
+function Card({ c, hidden, isNew, isRevealing, isPlaceholder }) {
+  const baseClasses = "w-14 h-20 rounded border flex items-center justify-center font-semibold transition-all duration-300"
+  
+  // Animation classes using custom keyframes
+  const animationClasses = isNew ? "animate-[fadeIn_0.6s_ease-in-out_forwards]" : ""
+  const revealClasses = isRevealing ? "animate-[flip_0.5s_ease-in-out]" : ""
+  
+  // Show face-down cards during betting phase or when hidden
+  if (hidden || isPlaceholder) {
+    return (
+      <div className={`${baseClasses} bg-neutral-700 border-neutral-600 ${animationClasses} ${revealClasses}`} />
+    )
   }
+  
   return (
-    <div className="w-14 h-20 rounded bg-white text-neutral-900 border border-neutral-300 flex items-center justify-center font-semibold">
+    <div className={`${baseClasses} bg-white text-neutral-900 border-neutral-300 ${animationClasses} ${revealClasses}`}>
       {c.rank}{c.suit}
     </div>
   )
