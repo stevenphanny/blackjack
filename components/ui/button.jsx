@@ -11,6 +11,8 @@ const buttonVariants = cva(
       variant: {
         default: "bg-white text-black rounded-full px-4 py-1 m-1",
         bet_numbers: "bg-white text-black rounded-full px-4 py-1 w-13 font-semibold",
+        hit_stand:"bg-white text-black rounded-full px-4 py-1 w-13 font-semibold hover:bg-green-500/80 focus-visible:ring-green-500/20",
+        question_bubble: "bg-white text-black rounded-full px-4 py-1 w-5 font-semibold",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:

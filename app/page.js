@@ -287,8 +287,10 @@ export default function Home() {
         </div>
       ) : (
         <div className="flex gap-2">
-          <Button onClick={hit}>Hit</Button>
-          <Button onClick={stand}>Stand</Button>
+          <Button variant="hit_stand" onClick={hit}>Hit</Button>
+          {/* <Button onClick={aiReccomendation}>?</Button> TODO */} 
+          <Button variant="question_bubble">?</Button>
+          <Button variant="hit_stand" onClick={stand}>Stand</Button>
         </div>
       )}
 

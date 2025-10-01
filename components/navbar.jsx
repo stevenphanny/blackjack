@@ -67,7 +67,7 @@ export default function Navbar() {
             </Link>
             
             {/* Buy more chips button */}
-            <Button variant="badge" onClick={() => setIsBuyDialogOpen(true)}>
+            <Button key="buy-chips" variant="badge" onClick={() => setIsBuyDialogOpen(true)}>
               Balance {chips}
             </Button>
         </div>
