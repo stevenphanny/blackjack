@@ -118,6 +118,10 @@ export default function Home() {
     setPhase('PLAYER')
   }
 
+  /**
+   * Hit action: draw a card for the player, check for bust
+   * @returns {void}
+   */
   function hit() {
     if (phase !== 'PLAYER') return
     const newCard = drawCard()
@@ -140,6 +144,10 @@ export default function Home() {
     }
   }
 
+  /**
+   * Stand action: end the player's turn and switch to dealer's turn
+   * @returns {void}
+   */
   function stand() {
     if (phase !== 'PLAYER') return
     setPhase('DEALER')
@@ -170,6 +178,12 @@ export default function Home() {
     }, 300) // Small delay for card reveal
   }
 
+  /**
+   * Finish the game: compute results, update chips, and persist game state
+   * @param {*} result 
+   * @param {*} finalPlayer 
+   * @param {*} finalDealer 
+   */
   async function finish(result, finalPlayer, finalDealer) {
     // compute delta and persist game result + update chips
     const delta = result === 'win' ? bet : result === 'loss' ? -bet : 0
@@ -200,6 +214,44 @@ export default function Home() {
       console.error(e)
     } finally {
       setPhase('FINISHED')
+    }
+  }
+
+  /**
+   * Get AI recommendation for current blackjack hand
+   * Calls the server-side API to get strategic advice from Google AI
+   * @returns {void}
+   */
+  async function aiRecommendation() {
+    if (phase !== 'PLAYER') {
+      setMsg('AI recommendations are only available during your turn.')
+      return
+    }
+
+    try {
+      setMsg('Getting AI recommendation...')
+      
+      const response = await fetch('/api/ai/recommendation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playerCards: player,
+          dealerUpCard: dealer[0], // Only the visible dealer card
+          playerTotal: pTotal
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        setMsg(`AI ${data.recommendation}`)
+      } else {
+        setMsg('AI recommendation unavailable right now.')
+        console.error('AI API error:', data.error)
+      }
+    } catch (error) {
+      console.error('AI recommendation error:', error)
+      setMsg('AI recommendation service is currently unavailable.')
     }
   }
 
@@ -285,10 +337,9 @@ export default function Home() {
           <Button onClick={newGame}>New Game</Button>
         </div>
       ) : (
-        <div className="flex gap-2">
+        <div className="flex-wrap gap-2">
           <Button variant="hit_stand" onClick={hit}>Hit</Button>
-          {/* <Button onClick={aiReccomendation}>?</Button> TODO */} 
-          <Button variant="question_bubble">?</Button>
+          <Button variant="hit_stand" onClick={aiRecommendation}>?</Button>
           <Button variant="hit_stand" onClick={stand}>Stand</Button>
         </div>
       )}
