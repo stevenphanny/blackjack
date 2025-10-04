@@ -28,6 +28,7 @@ export default function Home() {
   const [player, setPlayer] = useState([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])      // Start with placeholder cards
   const [dealer, setDealer] = useState([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])      // Start with placeholder cards
   const [msg, setMsg] = useState('')
+  const [gameResult, setGameResult] = useState(null) // 'win', 'loss', 'push', or null
   
   // Animation states
   const [newCardIndices, setNewCardIndices] = useState({ player: [], dealer: [] })
@@ -74,9 +75,10 @@ export default function Home() {
     setPhase('BETTING')
     setPlayer([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])
     setDealer([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])
-    setMsg('Place a bet and deal to start.')
+    setMsg('Place a bet and deal to start')
     setRevealDealerCard(false)
     setNewCardIndices({ player: [], dealer: [] })
+    setGameResult(null) // Reset game result
   }
 
   /**
@@ -139,7 +141,8 @@ export default function Home() {
     
     const t = calcHandTotal(next).total
     if (t > 21) {
-      setMsg('Bust! Dealer wins.')
+      setGameResult('loss') // Set result for bust
+      setMsg('Bust! Dealer wins')
       finish('loss', next, dealer)
     }
   }
@@ -173,7 +176,8 @@ export default function Home() {
       }
       
       const result = resolveResult(player, finalDealer)
-      setMsg(result === 'win' ? 'You win!' : result === 'loss' ? 'You lose.' : 'Push.')
+      setGameResult(result) // Store the game result
+      setMsg(result === 'win' ? 'You win!' : result === 'loss' ? 'You lose' : 'Push')
       finish(result, player, finalDealer)
     }, 300) // Small delay for card reveal
   }
@@ -270,41 +274,79 @@ export default function Home() {
       
       {/* Always show dealer and player sections */}
       <>
-        {/* Dealer section */}
+        {/* 
+          DEALER SECTION 
+          - Card visibility logic:
+            * BETTING phase: Shows face-down placeholder cards
+            * PLAYER phase: Shows first card face-up, second card hidden
+            * DEALER/FINISHED phase: All cards visible
+          - Animation features:
+            * New cards fade in when dealt (isNew)
+            * Hidden card flips when revealed (isRevealing)
+        */}
         <section className="max-w-xl rounded-2xl p-4">
+          {/* Card container - flexible wrap allows overflow to new line if many cards */}
           <div className="flex gap-2 flex-wrap">
             {dealer.map((c, i) => (
               <Card 
                 key={`d-${i}`} 
                 c={c} 
+                // Hide cards during betting OR hide dealer's hole card (index 1) during player turn
                 hidden={phase === 'BETTING' || (phase === 'PLAYER' && i === 1 && !revealDealerCard)} 
+                // Trigger fade-in animation for newly dealt cards
                 isNew={newCardIndices.dealer.includes(i)}
+                // Trigger flip animation when revealing hole card
                 isRevealing={i === 1 && revealDealerCard && phase === 'DEALER'}
+                // Show placeholder styling during betting phase
                 isPlaceholder={phase === 'BETTING'}
               />
             ))}
           </div>
+          {/* Dealer total display - centered below cards */}
           <div className="flex justify-center mt-4">
-            <Button variant="default" disabled>{(phase === 'DEALER' || phase === 'FINISHED') ? `Dealer Total: ${dTotal}` : "Dealer"}</Button>
+            <div className="px-4 py-2 rounded-lg bg-neutral-800 text-white font-semibold">
+              {(phase === 'DEALER' || phase === 'FINISHED') ? `Dealer: ${dTotal}` : "Dealer"}
+            </div>
           </div>
-
         </section>
 
-        {/* Player section */}
+        {/* 
+          PLAYER SECTION
+          - Displays player's cards in a horizontal row with gap spacing  
+          - Card visibility logic:
+            * BETTING phase: Shows face-down placeholder cards (aesthetic)
+            * PLAYER/DEALER/FINISHED phases: All cards always visible (no hidden cards)
+          - Animation features:
+            * New cards fade in when dealt or hit (isNew)
+            * No flip animations needed (player cards always face-up)
+          - Total display:
+            * Hidden during betting phase (no cards dealt yet)
+            * Always shown during active gameplay (player needs to see total)
+        */}
         <section className="max-w-xl rounded-2xl p-4">
+          {/* Card container - flexible wrap allows overflow if player has many cards */}
           <div className="flex gap-2 flex-wrap">
             {player.map((c, i) => (
               <Card 
                 key={`p-${i}`} 
                 c={c} 
+                // Only hide cards during betting phase (placeholder mode)
                 hidden={phase === 'BETTING'}
+                // Trigger fade-in animation for newly dealt/hit cards
                 isNew={newCardIndices.player.includes(i)}
+                // Show placeholder styling during betting phase
                 isPlaceholder={phase === 'BETTING'}
+                // Note: Player cards never flip (isRevealing not used)
               />
             ))}
           </div>
+          {/* Player total display - centered below cards with result-based coloring */}
           <div className="flex justify-center mt-4">
-            <Button variant="default" disabled>{(phase === 'PLAYER' || phase === 'DEALER' || phase === 'FINISHED') ? `You: ${pTotal}` : "You"}</Button>
+            <PlayerTotalDisplay 
+              phase={phase} 
+              total={pTotal} 
+              result={gameResult} 
+            />
           </div>
         </section>
       </>
@@ -354,7 +396,9 @@ function Card({ c, hidden, isNew, isRevealing, isPlaceholder }) {
   const baseClasses = "w-14 h-20 rounded border flex items-center justify-center font-semibold transition-all duration-300"
   
   // Animation classes using custom keyframes
+  // Fade in for new cards
   const animationClasses = isNew ? "animate-[fadeIn_0.6s_ease-in-out_forwards]" : ""
+  // Flip animation for revealing dealer's card
   const revealClasses = isRevealing ? "animate-[flip_0.5s_ease-in-out]" : ""
   
   // Show face-down cards during betting phase or when hidden
@@ -367,6 +411,46 @@ function Card({ c, hidden, isNew, isRevealing, isPlaceholder }) {
   return (
     <div className={`${baseClasses} bg-white text-neutral-900 border-neutral-300 ${animationClasses} ${revealClasses}`}>
       {c.rank}{c.suit}
+    </div>
+  )
+}
+
+/**
+ * Player Total Display Component with result-based coloring
+ * Shows different colors based on game outcome: green (win), yellow (push), red (loss)
+ */
+function PlayerTotalDisplay({ phase, total, result }) {
+  // Don't show total during betting phase
+  if (phase === 'BETTING') {
+    return (
+      <div className="px-4 py-2 rounded-lg bg-neutral-800 text-white font-semibold">
+        You
+      </div>
+    )
+  }
+
+  // Determine color based on game result (only applies in FINISHED phase)
+  let colorClasses = "bg-neutral-800 text-white" // Default neutral styling
+  
+  if (phase === 'FINISHED' && result) {
+    switch (result) {
+      case 'win':
+        colorClasses = "bg-green-800 text-white" // Green for wins
+        break
+      case 'loss':
+        colorClasses = "bg-red-800 text-white" // Red for losses  
+        break
+      case 'push':
+        colorClasses = "bg-yellow-500 text-black" // Yellow for pushes
+        break
+      default:
+        colorClasses = "bg-neutral-800 text-white"
+    }
+  }
+
+  return (
+    <div className={`px-4 py-2 rounded-lg font-semibold transition-all duration-300 ${colorClasses}`}>
+      You: {total}
     </div>
   )
 }
