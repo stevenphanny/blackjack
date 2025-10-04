@@ -91,7 +91,7 @@ export default function Home() {
    */
   function deal() {
     if (phase !== 'BETTING') return
-    if (bet < 1) return setMsg('Bet must be at least 1.')
+    if (!bet || bet < 1) return setMsg('Bet must be at least 1.')
     if (bet > chips) return setMsg('Bet exceeds your chip balance.')
     
     // Reset animation states
@@ -111,6 +111,8 @@ export default function Home() {
     
     // Trigger animations for new cards
     setNewCardIndices({ player: [0, 1], dealer: [0, 1] })
+
+    setMsg('Your move: Hit or Stand?')
     
     // Clear animation states after animation completes
     setTimeout(() => {
@@ -142,7 +144,7 @@ export default function Home() {
     const t = calcHandTotal(next).total
     if (t > 21) {
       setGameResult('loss') // Set result for bust
-      setMsg('Bust! Dealer wins')
+      setMsg('Bust! Dealer wins (-' + bet + ' )')
       finish('loss', next, dealer)
     }
   }
@@ -177,7 +179,7 @@ export default function Home() {
       
       const result = resolveResult(player, finalDealer)
       setGameResult(result) // Store the game result
-      setMsg(result === 'win' ? 'You win!' : result === 'loss' ? 'You lose' : 'Push')
+      setMsg(result === 'win' ? 'You win! (+' + bet + ' )' : result === 'loss' ? 'You lose (-' + bet + ' )' : 'Push')
       finish(result, player, finalDealer)
     }, 300) // Small delay for card reveal
   }
@@ -248,7 +250,8 @@ export default function Home() {
       const data = await response.json()
       
       if (response.ok) {
-        setMsg(`AI ${data.recommendation}`)
+        // Format with larger action and smaller explanation - using HTML for size difference
+        setMsg(`<span class="text-lg font-bold">AI recommends: ${data.action}</span>\n<span class="text-sm opacity-70">${data.explanation}</span>`)
       } else {
         setMsg('AI recommendation unavailable right now.')
         console.error('AI API error:', data.error)
@@ -351,7 +354,10 @@ export default function Home() {
         </section>
       </>
 
-      <div className="max-w-md text-sm opacity-80 text-center leading-relaxed px-4">{msg}</div>
+        <div 
+        className="max-w-md text-sm opacity-80 text-center leading-relaxed px-4 whitespace-pre-line"
+        dangerouslySetInnerHTML={{ __html: msg }}
+      />
 
 
       {/* Betting or Actions */}
@@ -362,9 +368,9 @@ export default function Home() {
           <input
             type="number"
             value={bet}
-            min={1}
-            onChange={e => setBet(Math.max(1, Number(e.target.value)))}
-            className="w-24 px-2 py-1 rounded border border-neutral-700 bg-neutral-900 text-white"
+            onChange={e => setBet(e.target.value === '' ? '' : Number(e.target.value))}
+            placeholder="Enter bet"
+            className="w-24 px-2 py-1 rounded border border-neutral-700 bg-neutral-900 text-white [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
           />
         <Button onClick={deal}>Deal</Button>
 
@@ -385,7 +391,7 @@ export default function Home() {
       ) : (
         <div className="flex-wrap gap-2">
           <Button variant="hit_stand" onClick={hit}>Hit</Button>
-          <Button variant="hit_stand" onClick={aiRecommendation}>?</Button>
+          <Button variant="circular_hollow" onClick={aiRecommendation}>?</Button>
           <Button variant="hit_stand" onClick={stand}>Stand</Button>
         </div>
       )}

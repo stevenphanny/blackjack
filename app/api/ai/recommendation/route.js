@@ -37,15 +37,37 @@ Current situation:
 - Dealer's up card: ${dealerUpCard.rank}${dealerUpCard.suit}
 
 Provide a recommendation in this exact format:
-"Recommendation: [Hit/Stand]. \n[Brief 1-sentence explanation based on basic strategy. Don't do Explanation: ... format. Just give me the explanation.]"
+"Recommendation: [Hit/Stand]. \n[Brief 1-sentence explanation based on basic strategy. Don't do Explanation: ... format. Just give me the short explanation.]"
 
-Keep the response under 50 words and focus on optimal blackjack strategy.`
+Keep the explanation short but informative.`
 
     // Generate AI recommendation
     const result = await model.generateContent(prompt)
-    const recommendation = result.response.text()
+    const fullResponse = result.response.text()
     
-    return NextResponse.json({ recommendation })
+    // Parse the recommendation to extract action and explanation
+    let action = 'Hit or Stand'
+    let explanation = fullResponse
+    
+    // Try to extract structured response
+    const match = fullResponse.match(/Recommendation:\s*(Hit|Stand)\s*\.?\s*\n?(.*)/is)
+    if (match) {
+      action = match[1]  // "Hit" or "Stand"
+      explanation = match[2].trim()  // The explanation part
+    } else {
+      // Fallback: try to find Hit/Stand in the response
+      const simpleMatch = fullResponse.match(/(Hit|Stand)/i)
+      if (simpleMatch) {
+        action = simpleMatch[1]
+        explanation = fullResponse.replace(/Recommendation:\s*/i, '').replace(new RegExp(action, 'i'), '').trim()
+      }
+    }
+    
+    return NextResponse.json({ 
+      action, 
+      explanation,
+      fullResponse // Keep original for debugging if needed
+    })
     
   } catch (error) {
     console.error('AI recommendation error:', error)

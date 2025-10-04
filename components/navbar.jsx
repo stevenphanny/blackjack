@@ -66,10 +66,15 @@ export default function Navbar() {
                 Blackjack
             </Link>
             
-            {/* Buy more chips button */}
-            <Button key="buy-chips" variant="badge" onClick={() => setIsBuyDialogOpen(true)}>
-              Balance {chips}
-            </Button>
+            {/* Balance display and Add chips button */}
+            <div className="flex items-center space-x-2">
+              <div className="px-3 py-2 mr-0 bg-neutral-800 text-white rounded-full text-sm font-semibold">
+                Balance {chips}
+              </div>
+              <Button key="buy-chips" variant="circular-hollow" onClick={() => setIsBuyDialogOpen(true)}>
+                Add Chips
+              </Button>
+            </div>
         </div>
         
 
