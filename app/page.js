@@ -270,7 +270,7 @@ export default function Home() {
      */
     <main className="flex min-h-full flex-col items-center justify-center gap-3">
       {/* Title */}
-      <h1 className="text-4xl font-bold text-white my-6">Blackjack</h1>
+      <h1 className="text-5xl font-bold text-white my-6">Blackjack</h1>
       
       {/* Always show dealer and player sections */}
       <>
@@ -386,14 +386,14 @@ export default function Home() {
         </div>
       )}
 
-      <div className="text-sm opacity-80">{msg}</div>
+      <div className="max-w-md text-sm opacity-80 text-center leading-relaxed px-4">{msg}</div>
     </main>
   )
 }
 
 // Card UI with animations for dealing and revealing
 function Card({ c, hidden, isNew, isRevealing, isPlaceholder }) {
-  const baseClasses = "w-14 h-20 rounded border flex items-center justify-center font-semibold transition-all duration-300"
+  const baseClasses = "w-18 h-25 rounded border flex items-center justify-center font-semibold transition-all duration-300"
   
   // Animation classes using custom keyframes
   // Fade in for new cards
