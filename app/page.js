@@ -351,6 +351,9 @@ export default function Home() {
         </section>
       </>
 
+      <div className="max-w-md text-sm opacity-80 text-center leading-relaxed px-4">{msg}</div>
+
+
       {/* Betting or Actions */}
       {phase === 'BETTING' ? (
         <>
@@ -363,13 +366,14 @@ export default function Home() {
             onChange={e => setBet(Math.max(1, Number(e.target.value)))}
             className="w-24 px-2 py-1 rounded border border-neutral-700 bg-neutral-900 text-white"
           />
+        <Button onClick={deal}>Deal</Button>
+
         </div>
 
         {/* Bet buttons */}
-        <Button onClick={deal}>Deal</Button>
         <div className="flex gap-1">
-          {[5,10,25,50,100].map(v => (
-            <Button variant="bet_numbers" key={v} onClick={() => setBet(Math.min(v, chips))}>+{v}</Button>
+          {[5,10,50,100].map(v => (
+            <Button variant="bet_numbers" key={v} onClick={() => setBet(Math.min(v + bet, chips))}>+{v}</Button>
           ))}
         </div>
         </>
@@ -386,14 +390,13 @@ export default function Home() {
         </div>
       )}
 
-      <div className="max-w-md text-sm opacity-80 text-center leading-relaxed px-4">{msg}</div>
     </main>
   )
 }
 
 // Card UI with animations for dealing and revealing
 function Card({ c, hidden, isNew, isRevealing, isPlaceholder }) {
-  const baseClasses = "w-18 h-25 rounded border flex items-center justify-center font-semibold transition-all duration-300"
+  const baseClasses = "w-17 h-24 rounded border flex items-center justify-center font-semibold transition-all duration-300"
   
   // Animation classes using custom keyframes
   // Fade in for new cards
@@ -404,7 +407,7 @@ function Card({ c, hidden, isNew, isRevealing, isPlaceholder }) {
   // Show face-down cards during betting phase or when hidden
   if (hidden || isPlaceholder) {
     return (
-      <div className={`${baseClasses} bg-neutral-700 border-neutral-600 ${animationClasses} ${revealClasses}`} />
+      <div className={`${baseClasses} bg-neutral-700 border-neutral-400 ${animationClasses} ${revealClasses}`} />
     )
   }
   
@@ -429,10 +432,10 @@ function PlayerTotalDisplay({ phase, total, result }) {
     )
   }
 
-  // Determine color based on game result (only applies in FINISHED phase)
+  // Determine color based on game result (applies immediately when result is set)
   let colorClasses = "bg-neutral-800 text-white" // Default neutral styling
   
-  if (phase === 'FINISHED' && result) {
+  if (result) {
     switch (result) {
       case 'win':
         colorClasses = "bg-green-800 text-white" // Green for wins
