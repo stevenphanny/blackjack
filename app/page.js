@@ -372,7 +372,7 @@ export default function Home() {
             placeholder="Enter bet"
             className="w-24 px-2 py-1 rounded border border-neutral-700 bg-neutral-900 text-white [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
           />
-        <Button onClick={deal}>Deal</Button>
+        <Button className="testing" onClick={deal}>Deal</Button>
 
         </div>
 

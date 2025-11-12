@@ -148,3 +148,21 @@ body {
     transform: rotateY(0deg);
   }
 }
+
+.testing {
+  /* transition-property: transform;
+  transition-duration: 500ms;
+  transition-timing-function: ease;
+  transition-delay: 0s; */
+
+  /* transition: transform 1s ease 0s,
+  background-color 500ms ease 0s; */
+
+  transition: all 1.5s ease 0s;
+
+}
+
+.testing:hover {
+    transform: rotateX(360deg);
+    background-color: green;
+  }
