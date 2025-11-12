@@ -3,20 +3,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { getClientId, getChips } from '@/lib/storage'
 import { drawCard, calcHandTotal, dealerAutoPlay, resolveResult } from '@/lib/blackjack'
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import HTMLContent from '@/components/HTMLContent'
+import { motion, AnimatePresence } from "motion/react"
+import Splash from '@/components/Splash'
 
 export default function Home() {
+  // Splash screen state
+  const [ready, setReady] = useState(false)
+
   // Per-browser ID
   const [clientId, setClientId] = useState('')
   // Current chip balance (DB)
@@ -272,7 +266,33 @@ export default function Home() {
      * gap-6: spacing between children
      */
     <main className="flex min-h-full flex-col items-center justify-center gap-3">
-      {/* Title */}
+      <AnimatePresence>
+        {!ready && (
+          <motion.div
+            key="splash"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }} // fade-out duration
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
+          >
+            <HTMLContent
+              onDone={() => setReady(true)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      <motion.div
+        key="app"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: ready ? 1 : 0 }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+        className="z-10 flex flex-col items-center justify-center gap-3"
+      >
+      {ready && (
+        <>
+          {/* Title */}
       <h1 className="text-5xl font-bold text-white my-6">Blackjack</h1>
       
       {/* Always show dealer and player sections */}
@@ -395,8 +415,12 @@ export default function Home() {
           <Button variant="hit_stand" onClick={stand}>Stand</Button>
         </div>
       )}
-
+        </>
+      )}
+      
+      </motion.div>
     </main>
+    
   )
 }
 
