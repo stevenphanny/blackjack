@@ -8,8 +8,13 @@ import { motion, AnimatePresence } from "motion/react"
 import Splash from '@/components/Splash'
 
 export default function Home() {
-  // Splash screen state
-  const [ready, setReady] = useState(false)
+  // Splash screen state - check if already shown this session
+  const [ready, setReady] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('splashShown') === 'true'
+    }
+    return false
+  })
 
   // Per-browser ID
   const [clientId, setClientId] = useState('')
@@ -277,7 +282,10 @@ export default function Home() {
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
           >
             <HTMLContent
-              onDone={() => setReady(true)}
+              onDone={() => {
+                setReady(true)
+                sessionStorage.setItem('splashShown', 'true')
+              }}
             />
           </motion.div>
         )}
