@@ -262,7 +262,7 @@ export default function HistoryPage() {
                         <div className='col text-sm text-gray-400 font-semibold'>
                           Score
                         </div>
-                        <div className='col text-sm font-bold'>You: {game.playerTotal} | Dealer: {game.dealerTotal}</div>
+                        <div className='col text-sm font-bold'>You: {game.playerTotal} | er: {game.erTotal}</div>
                       </div>
 
                     </div>

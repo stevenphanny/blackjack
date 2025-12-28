@@ -54,7 +54,6 @@ export default function Navbar() {
   const navItems = [
     { href: '/', label: 'Home' },
     { href: '/history', label: 'History' },
-    { href: '/logout', label: 'Logout' },
   ]
 
   return (
