@@ -70,9 +70,9 @@ Keep the explanation short but informative.`
     })
     
   } catch (error) {
-    console.error('AI recommendation error:', error)
+    console.error('AI recommendation error:', error?.message || error)
     return NextResponse.json(
-      { error: 'Failed to generate recommendation' },
+      { error: error?.message || 'Failed to generate recommendation' },
       { status: 500 }
     )
   }

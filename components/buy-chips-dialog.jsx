@@ -67,7 +67,7 @@ export default function BuyChipsDialog({
         </Button>
 
         <AlertDialogHeader>
-          <AlertDialogTitle className="font-[family-name:var(--font-playfair)] text-xl tracking-wide">Buy More Chips</AlertDialogTitle>
+          <AlertDialogTitle className="font-[family-name:var(--font-playfair)] text-xl tracking-wide text-white">Buy More Chips</AlertDialogTitle>
           <AlertDialogDescription>
             Current balance: <span className="text-[#c9a84c] font-semibold">{currentChips} chips</span>
           </AlertDialogDescription>
