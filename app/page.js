@@ -1,21 +1,11 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { getClientId, getChips } from '@/lib/storage'
 import { drawCard, calcHandTotal, dealerAutoPlay, resolveResult } from '@/lib/blackjack'
-import HTMLContent from '@/components/HTMLContent'
-import { motion, AnimatePresence } from "motion/react"
-import Splash from '@/components/Splash'
+import { motion } from "motion/react"
 
 export default function Home() {
-  // Splash screen state - check if already shown this session
-  const [ready, setReady] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('splashShown') === 'true'
-    }
-    return false
-  })
-
   // Per-browser ID
   const [clientId, setClientId] = useState('')
   // Current chip balance (DB)
@@ -24,26 +14,25 @@ export default function Home() {
   // Game state
   const [bet, setBet] = useState(10)
   const [phase, setPhase] = useState('BETTING') // BETTING | PLAYER | DEALER | FINISHED
-  const [player, setPlayer] = useState([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])      // Start with placeholder cards
-  const [dealer, setDealer] = useState([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])      // Start with placeholder cards
+  const [player, setPlayer] = useState([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])
+  const [dealer, setDealer] = useState([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])
   const [msg, setMsg] = useState('')
   const [gameResult, setGameResult] = useState(null) // 'win', 'loss', 'push', or null
-  
+
   // Animation states
   const [newCardIndices, setNewCardIndices] = useState({ player: [], dealer: [] })
   const [revealDealerCard, setRevealDealerCard] = useState(false)
 
-  // Memoized totals to avoid unnecessary recalculations - only calculate if cards are real
+  // Memoized totals
   const pTotal = useMemo(() => {
     if (phase === 'BETTING') return 0
     return calcHandTotal(player).total
   }, [player, phase])
-  
+
   const dTotal = useMemo(() => {
     if (phase === 'BETTING') return 0
     return calcHandTotal(dealer).total
   }, [dealer, phase])
-
 
   // Initialise: get client id & load chips
   useEffect(() => {
@@ -66,10 +55,6 @@ export default function Home() {
 
   // ---- Game actions ----
 
-  /**
-   * Starts a new game by resetting to betting phase with placeholder cards
-   * @returns {void}
-   */
   function newGame() {
     setPhase('BETTING')
     setPlayer([{ rank: '?', suit: '' }, { rank: '?', suit: '' }])
@@ -77,120 +62,88 @@ export default function Home() {
     setMsg('Place a bet and deal to start')
     setRevealDealerCard(false)
     setNewCardIndices({ player: [], dealer: [] })
-    setGameResult(null) // Reset game result
+    setGameResult(null)
   }
 
-  /**
-   * Deals the cards to start a new round in classic blackjack sequence:
-   * 1st card: Player (visible)
-   * 2nd card: Dealer (visible) 
-   * 3rd card: Player (visible)
-   * 4th card: Dealer (hidden)
-   * @returns {void}
-   */
   function deal() {
     if (phase !== 'BETTING') return
     if (!bet || bet < 1) return setMsg('Bet must be at least 1.')
     if (bet > chips) return setMsg('Bet exceeds your chip balance.')
-    
-    // Reset animation states
+
     setRevealDealerCard(false)
     setNewCardIndices({ player: [], dealer: [] })
-    
-    // Classic blackjack dealing sequence
-    const card1 = drawCard() // Player's 1st card (visible)
-    const card2 = drawCard() // Dealer's 1st card (visible)
-    const card3 = drawCard() // Player's 2nd card (visible)
-    const card4 = drawCard() // Dealer's 2nd card (face down)
-    
+
+    const card1 = drawCard()
+    const card2 = drawCard()
+    const card3 = drawCard()
+    const card4 = drawCard()
+
     const p = [card1, card3]
     const d = [card2, card4]
     setPlayer(p)
     setDealer(d)
-    
-    // Trigger animations for new cards
-    setNewCardIndices({ player: [0, 1], dealer: [0, 1] })
 
+    setNewCardIndices({ player: [0, 1], dealer: [0, 1] })
     setMsg('Your move: Hit or Stand?')
-    
-    // Clear animation states after animation completes
+
     setTimeout(() => {
       setNewCardIndices({ player: [], dealer: [] })
     }, 600)
-    
+
     setPhase('PLAYER')
   }
 
-  /**
-   * Hit action: draw a card for the player, check for bust
-   * @returns {void}
-   */
   function hit() {
     if (phase !== 'PLAYER') return
     const newCard = drawCard()
     const next = [...player, newCard]
     setPlayer(next)
-    
-    // Animate the new card
+
     const newIndex = next.length - 1
     setNewCardIndices(prev => ({ ...prev, player: [newIndex] }))
-    
-    // Clear animation after it completes
+
     setTimeout(() => {
       setNewCardIndices(prev => ({ ...prev, player: [] }))
     }, 600)
-    
+
     const t = calcHandTotal(next).total
     if (t > 21) {
-      setGameResult('loss') // Set result for bust
-      setMsg('Bust! Dealer wins (-' + bet + ' )')
+      setGameResult('loss')
+      setMsg('Bust! Dealer wins (−' + bet + ' chips)')
       finish('loss', next, dealer)
     }
   }
 
-  /**
-   * Stand action: end the player's turn and switch to dealer's turn
-   * @returns {void}
-   */
   function stand() {
     if (phase !== 'PLAYER') return
     setPhase('DEALER')
-    
-    // Reveal dealer's hidden card with animation
+
     setRevealDealerCard(true)
-    
+
     setTimeout(() => {
       const finalDealer = dealerAutoPlay(dealer)
       setDealer(finalDealer)
-      
-      // Animate any additional dealer cards
+
       if (finalDealer.length > dealer.length) {
         const newIndices = []
         for (let i = dealer.length; i < finalDealer.length; i++) {
           newIndices.push(i)
         }
         setNewCardIndices(prev => ({ ...prev, dealer: newIndices }))
-        
+
         setTimeout(() => {
           setNewCardIndices(prev => ({ ...prev, dealer: [] }))
         }, 600)
       }
-      
+
       const result = resolveResult(player, finalDealer)
-      setGameResult(result) // Store the game result
-      setMsg(result === 'win' ? 'You win! (+' + bet + ' )' : result === 'loss' ? 'You lose (-' + bet + ' )' : 'Push')
+      setGameResult(result)
+      setMsg(result === 'win' ? 'You win! (+' + bet + ' chips)' : result === 'loss' ? 'You lose (−' + bet + ' chips)' : 'Push — bet returned')
       finish(result, player, finalDealer)
-    }, 300) // Small delay for card reveal
+    }, 300)
   }
 
-  /**
-   * Finish the game: compute results, update chips, and persist game state
-   * @param {*} result 
-   * @param {*} finalPlayer 
-   * @param {*} finalDealer 
-   */
   async function finish(result, finalPlayer, finalDealer) {
-    // compute delta and persist game result + update chips
     const delta = result === 'win' ? bet : result === 'loss' ? -bet : 0
     try {
       const res = await fetch('/api/games/settle', {
@@ -208,9 +161,8 @@ export default function Home() {
       const data = await res.json()
       if (res.ok) {
         setChips(data.chips)
-        // notify other tabs/components (navbar will update too)
-        window.dispatchEvent(new CustomEvent('chipsUpdated', { 
-          detail: { newBalance: data.chips, clientId } 
+        window.dispatchEvent(new CustomEvent('chipsUpdated', {
+          detail: { newBalance: data.chips, clientId }
         }))
       } else {
         console.error(data.error)
@@ -222,11 +174,6 @@ export default function Home() {
     }
   }
 
-  /**
-   * Get AI recommendation for current blackjack hand
-   * Calls the server-side API to get strategic advice from Google AI
-   * @returns {void}
-   */
   async function aiRecommendation() {
     if (phase !== 'PLAYER') {
       setMsg('AI recommendations are only available during your turn.')
@@ -234,23 +181,22 @@ export default function Home() {
     }
 
     try {
-      setMsg('Getting AI recommendation...')
-      
+      setMsg('Consulting AI strategist...')
+
       const response = await fetch('/api/ai/recommendation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           playerCards: player,
-          dealerUpCard: dealer[0], // Only the visible dealer card
+          dealerUpCard: dealer[0],
           playerTotal: pTotal
         })
       })
-      
+
       const data = await response.json()
-      
+
       if (response.ok) {
-        // Format with larger action and smaller explanation - using HTML for size difference
-        setMsg(`<span class="text-lg font-bold">AI recommends: ${data.action}</span>\n<span class="text-sm opacity-70">${data.explanation}</span>`)
+        setMsg(`<span class="text-base font-semibold text-[#c9a84c]">AI recommends: ${data.action}</span>\n<span class="text-sm opacity-60">${data.explanation}</span>`)
       } else {
         setMsg('AI recommendation unavailable right now.')
         console.error('AI API error:', data.error)
@@ -262,236 +208,159 @@ export default function Home() {
   }
 
   return (
-    /**
-     * flex: fill available space
-     * min-h-full: ensure at least full height of viewport
-     * flex-col: stack children vertically
-     * items-center: center children horizontally
-     * justify-center: center children vertically
-     * gap-6: spacing between children
-     */
-    <main className="flex min-h-full flex-col items-center justify-center gap-3">
-      <AnimatePresence>
-        {!ready && (
-          <motion.div
-            key="splash"
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1 }} // fade-out duration
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
-          >
-            <HTMLContent
-              onDone={() => {
-                setReady(true)
-                sessionStorage.setItem('splashShown', 'true')
-              }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
+    <main className="flex min-h-full flex-col items-center justify-center gap-5">
       <motion.div
-        key="app"
         initial={{ opacity: 0 }}
-        animate={{ opacity: ready ? 1 : 0 }}
-        transition={{ duration: 1.2, ease: "easeOut" }}
-        className="z-10 flex flex-col items-center justify-center gap-3"
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="z-10 flex flex-col items-center justify-center gap-5"
       >
-      {ready && (
-        <>
-          {/* Title */}
-      <h1 className="text-5xl font-bold text-white my-6">Blackjack</h1>
-      
-      {/* Always show dealer and player sections */}
-      <>
-        {/* 
-          DEALER SECTION 
-          - Card visibility logic:
-            * BETTING phase: Shows face-down placeholder cards
-            * PLAYER phase: Shows first card face-up, second card hidden
-            * DEALER/FINISHED phase: All cards visible
-          - Animation features:
-            * New cards fade in when dealt (isNew)
-            * Hidden card flips when revealed (isRevealing)
-        */}
+        {/* Title */}
+        <h1 className="font-[family-name:var(--font-playfair)] text-5xl font-bold text-white tracking-wide my-4">
+          ♠ Blackjack
+        </h1>
+
+        {/* DEALER SECTION */}
         <section className="max-w-xl rounded-2xl p-4">
-          {/* Card container - flexible wrap allows overflow to new line if many cards */}
-          <div className="flex gap-2 flex-wrap">
+          <p className="font-[family-name:var(--font-playfair)] italic text-white/40 text-sm text-center mb-3">
+            Dealer&apos;s Hand
+          </p>
+          <div className="flex gap-3 flex-wrap justify-center">
             {dealer.map((c, i) => (
-              <Card 
-                key={`d-${i}`} 
-                c={c} 
-                // Hide cards during betting OR hide dealer's hole card (index 1) during player turn
-                hidden={phase === 'BETTING' || (phase === 'PLAYER' && i === 1 && !revealDealerCard)} 
-                // Trigger fade-in animation for newly dealt cards
+              <Card
+                key={`d-${i}`}
+                c={c}
+                hidden={phase === 'BETTING' || (phase === 'PLAYER' && i === 1 && !revealDealerCard)}
                 isNew={newCardIndices.dealer.includes(i)}
-                // Trigger flip animation when revealing hole card
                 isRevealing={i === 1 && revealDealerCard && phase === 'DEALER'}
-                // Show placeholder styling during betting phase
                 isPlaceholder={phase === 'BETTING'}
               />
             ))}
           </div>
-          {/* Dealer total display - centered below cards */}
           <div className="flex justify-center mt-4">
-            <div className="px-4 py-2 rounded-lg bg-neutral-800 text-white font-semibold">
-              {(phase === 'DEALER' || phase === 'FINISHED') ? `Dealer: ${dTotal}` : "Dealer"}
+            <div className="px-5 py-2 rounded-full bg-white/5 border border-white/10 text-white/70 text-sm font-semibold">
+              {(phase === 'DEALER' || phase === 'FINISHED') ? `Dealer: ${dTotal}` : 'Dealer'}
             </div>
           </div>
         </section>
 
-        {/* 
-          PLAYER SECTION
-          - Displays player's cards in a horizontal row with gap spacing  
-          - Card visibility logic:
-            * BETTING phase: Shows face-down placeholder cards (aesthetic)
-            * PLAYER/DEALER/FINISHED phases: All cards always visible (no hidden cards)
-          - Animation features:
-            * New cards fade in when dealt or hit (isNew)
-            * No flip animations needed (player cards always face-up)
-          - Total display:
-            * Hidden during betting phase (no cards dealt yet)
-            * Always shown during active gameplay (player needs to see total)
-        */}
+        {/* PLAYER SECTION */}
         <section className="max-w-xl rounded-2xl p-4">
-          {/* Card container - flexible wrap allows overflow if player has many cards */}
-          <div className="flex gap-2 flex-wrap">
+          <p className="font-[family-name:var(--font-playfair)] italic text-white/40 text-sm text-center mb-3">
+            Your Hand
+          </p>
+          <div className="flex gap-3 flex-wrap justify-center">
             {player.map((c, i) => (
-              <Card 
-                key={`p-${i}`} 
-                c={c} 
-                // Only hide cards during betting phase (placeholder mode)
+              <Card
+                key={`p-${i}`}
+                c={c}
                 hidden={phase === 'BETTING'}
-                // Trigger fade-in animation for newly dealt/hit cards
                 isNew={newCardIndices.player.includes(i)}
-                // Show placeholder styling during betting phase
                 isPlaceholder={phase === 'BETTING'}
-                // Note: Player cards never flip (isRevealing not used)
               />
             ))}
           </div>
-          {/* Player total display - centered below cards with result-based coloring */}
           <div className="flex justify-center mt-4">
-            <PlayerTotalDisplay 
-              phase={phase} 
-              total={pTotal} 
-              result={gameResult} 
-            />
+            <PlayerTotalDisplay phase={phase} total={pTotal} result={gameResult} />
           </div>
         </section>
-      </>
 
-        <div 
-        className="max-w-md text-sm opacity-80 text-center leading-relaxed px-4 whitespace-pre-line"
-        dangerouslySetInnerHTML={{ __html: msg }}
-      />
-
-
-      {/* Betting or Actions */}
-      {phase === 'BETTING' ? (
-        <>
-        {/* Input box for betting chips */}
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            value={bet}
-            onChange={e => setBet(e.target.value === '' ? '' : Number(e.target.value))}
-            placeholder="Enter bet"
-            className="w-24 px-2 py-1 rounded border border-neutral-700 bg-neutral-900 text-white [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+        {/* Message */}
+        {msg && (
+          <div
+            className="max-w-sm text-sm text-white/60 text-center leading-relaxed px-4 whitespace-pre-line font-[family-name:var(--font-inter)] tracking-wide"
+            dangerouslySetInnerHTML={{ __html: msg }}
           />
-        <Button onClick={deal}>Deal</Button>
+        )}
 
-        </div>
-
-        {/* Bet buttons */}
-        <div className="flex gap-1">
-          {[5,10,50,100].map(v => (
-            <Button variant="bet_numbers" key={v} onClick={() => setBet(Math.min(v + bet, chips))}>+{v}</Button>
-          ))}
-        </div>
-        </>
-
-      ) : phase === 'FINISHED' ? (
-        <div className="flex gap-2">
-          <Button onClick={newGame}>New Game</Button>
-        </div>
-      ) : (
-        <div className="flex-wrap gap-2">
-          <Button variant="hit_stand" onClick={hit}>Hit</Button>
-          <Button variant="circular_hollow" onClick={aiRecommendation}>?</Button>
-          <Button variant="hit_stand" onClick={stand}>Stand</Button>
-        </div>
-      )}
-        </>
-      )}
-      
+        {/* Betting or Actions */}
+        {phase === 'BETTING' ? (
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                value={bet}
+                onChange={e => setBet(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="Enter bet"
+                className="w-24 px-3 py-2 rounded-lg border border-white/20 bg-white/5 text-white text-sm focus:border-[#c9a84c] focus:outline-none transition-colors [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+              />
+              <Button onClick={deal}>Deal</Button>
+            </div>
+            <div className="flex gap-2">
+              {[5, 10, 50, 100].map(v => (
+                <Button variant="bet_numbers" key={v} onClick={() => setBet(Math.min(v + bet, chips))}>+{v}</Button>
+              ))}
+            </div>
+          </div>
+        ) : phase === 'FINISHED' ? (
+          <div className="flex gap-2">
+            <Button onClick={newGame}>New Game</Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button variant="hit_stand" onClick={hit}>Hit</Button>
+            <Button variant="circular_hollow" onClick={aiRecommendation}>?</Button>
+            <Button variant="hit_stand" onClick={stand}>Stand</Button>
+          </div>
+        )}
       </motion.div>
     </main>
-    
   )
 }
 
-// Card UI with animations for dealing and revealing
+// Playing card with proper corner layout and suit coloring
 function Card({ c, hidden, isNew, isRevealing, isPlaceholder }) {
-  const baseClasses = "w-17 h-24 rounded border flex items-center justify-center font-semibold transition-all duration-300"
-  
-  // Animation classes using custom keyframes
-  // Fade in for new cards
-  const animationClasses = isNew ? "animate-[fadeIn_0.6s_ease-in-out_forwards]" : ""
-  // Flip animation for revealing dealer's card
-  const revealClasses = isRevealing ? "animate-[flip_0.5s_ease-in-out]" : ""
-  
-  // Show face-down cards during betting phase or when hidden
+  const animationClass = isNew ? "animate-[fadeIn_0.6s_ease-in-out_forwards]" : ""
+  const revealClass = isRevealing ? "animate-[flip_0.5s_ease-in-out]" : ""
+  const baseClasses = "relative w-20 h-[112px] rounded-lg border select-none"
+
   if (hidden || isPlaceholder) {
     return (
-      <div className={`${baseClasses} bg-neutral-700 border-neutral-400 ${animationClasses} ${revealClasses}`} />
-    )
-  }
-  
-  return (
-    <div className={`${baseClasses} bg-white text-neutral-900 border-neutral-300 ${animationClasses} ${revealClasses}`}>
-      {c.rank}{c.suit}
-    </div>
-  )
-}
-
-/**
- * Player Total Display Component with result-based coloring
- * Shows different colors based on game outcome: green (win), yellow (push), red (loss)
- */
-function PlayerTotalDisplay({ phase, total, result }) {
-  // Don't show total during betting phase
-  if (phase === 'BETTING') {
-    return (
-      <div className="px-4 py-2 rounded-lg bg-neutral-800 text-white font-semibold">
-        You
+      <div className={`${baseClasses} bg-[#1a2744] border-[#2d3d6b] shadow-lg ${animationClass} ${revealClass}`}>
+        {/* Classic card back inner border */}
+        <div className="absolute inset-[5px] rounded border border-[#2d3d6b]/60" />
       </div>
     )
   }
 
-  // Determine color based on game result (applies immediately when result is set)
-  let colorClasses = "bg-neutral-800 text-white" // Default neutral styling
-  
+  const isRed = c.suit === '♥' || c.suit === '♦'
+  const suitColor = isRed ? 'text-red-600' : 'text-neutral-900'
+
+  return (
+    <div className={`${baseClasses} bg-white border-neutral-200 shadow-md ${suitColor} ${animationClass} ${revealClass}`}>
+      {/* Top-left corner */}
+      <div className={`absolute top-1.5 left-2 text-xs font-bold leading-tight font-[family-name:var(--font-playfair)]`}>
+        <div>{c.rank}</div>
+        <div className="text-[10px]">{c.suit}</div>
+      </div>
+      {/* Center suit */}
+      <div className="flex h-full items-center justify-center text-2xl">
+        {c.suit}
+      </div>
+      {/* Bottom-right corner (rotated) */}
+      <div className={`absolute bottom-1.5 right-2 text-xs font-bold leading-tight rotate-180 font-[family-name:var(--font-playfair)]`}>
+        <div>{c.rank}</div>
+        <div className="text-[10px]">{c.suit}</div>
+      </div>
+    </div>
+  )
+}
+
+// Player total display with result-based coloring
+function PlayerTotalDisplay({ phase, total, result }) {
+  let textColor = 'text-white/70'
+
   if (result) {
     switch (result) {
-      case 'win':
-        colorClasses = "bg-green-800 text-white" // Green for wins
-        break
-      case 'loss':
-        colorClasses = "bg-red-800 text-white" // Red for losses  
-        break
-      case 'push':
-        colorClasses = "bg-yellow-500 text-black" // Yellow for pushes
-        break
-      default:
-        colorClasses = "bg-neutral-800 text-white"
+      case 'win':  textColor = 'text-[#c9a84c]'; break
+      case 'loss': textColor = 'text-red-400';    break
+      case 'push': textColor = 'text-yellow-400'; break
     }
   }
 
   return (
-    <div className={`px-4 py-2 rounded-lg font-semibold transition-all duration-300 ${colorClasses}`}>
-      You: {total}
+    <div className={`px-5 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-semibold transition-all duration-300 ${textColor}`}>
+      {phase === 'BETTING' ? 'You' : `You: ${total}`}
     </div>
   )
 }

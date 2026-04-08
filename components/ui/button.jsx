@@ -9,20 +9,20 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-white text-black rounded-full px-4 py-1 m-1",
-        bet_numbers: "bg-white text-black rounded-full px-4 py-1 w-13 font-semibold",
-        circular_hollow: "border-1 border-white bg-transparent text-white rounded-full w-2 h-2 p-0 hover:bg-gray-300 hover:text-black transition-colors text-s",
-        hit_stand:"bg-white text-black rounded-full px-4 py-1 m-1 w-13 font-semibold hover:bg-gray-300 focus-visible:ring-gray-500/20",
+        default: "bg-[#c9a84c] text-[#0a0f0a] rounded-full px-5 py-2 font-semibold hover:bg-[#dbb85c] transition-colors",
+        bet_numbers: "border border-[#c9a84c]/50 bg-transparent text-[#c9a84c] rounded-full px-4 py-1 w-14 font-semibold hover:bg-[#c9a84c]/10 transition-colors",
+        circular_hollow: "border border-[#c9a84c] bg-transparent text-[#c9a84c] rounded-full w-9 h-9 p-0 hover:bg-[#c9a84c]/15 transition-colors text-sm font-bold",
+        hit_stand: "bg-white/10 border border-white/20 text-white rounded-full px-6 py-2 font-semibold hover:bg-white/20 hover:border-white/40 transition-all w-24",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "border bg-white text-black shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "border border-white/20 bg-white/5 text-white shadow-xs hover:bg-white/10 hover:border-white/40 transition-colors",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
-        badge: "bg-primary text-white rounded-full px-4 py-1 m-1 text-xs font-semibold hover:bg-primary/90 focus-visible:ring-primary/20",
+          "hover:bg-white/8 text-white/70 hover:text-white transition-colors",
+        link: "text-[#c9a84c] underline-offset-4 hover:underline",
+        badge: "bg-white/8 text-white/80 border border-white/15 rounded-full px-4 py-1 text-xs font-semibold hover:bg-white/15 hover:text-white transition-colors",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
