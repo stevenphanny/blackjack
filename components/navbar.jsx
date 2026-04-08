@@ -57,21 +57,21 @@ export default function Navbar() {
   ]
 
   return (
-    <nav className="px-5 py-5">
+    <nav className="px-6 py-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-5">
             {/* Website Logo/ Name */}
-            <Link href="/" className="text-xl font-bold text-white">
-                Blackjack
+            <Link href="/" className="font-[family-name:var(--font-playfair)] text-xl font-bold text-white tracking-wide">
+                ♠ Blackjack
             </Link>
-            
+
             {/* Balance display and Add chips button */}
             <div className="flex items-center space-x-2">
-              <div className="px-3 py-2 mr-0 bg-neutral-800 text-white rounded-full text-sm font-semibold">
-                Balance {chips}
+              <div className="px-3 py-1.5 bg-[#c9a84c]/10 border border-[#c9a84c]/40 text-[#c9a84c] rounded-full text-sm font-semibold">
+                {chips} chips
               </div>
-              <Button key="buy-chips" variant="circular-hollow" onClick={() => setIsBuyDialogOpen(true)}>
-                Add Chips
+              <Button variant="circular_hollow" onClick={() => setIsBuyDialogOpen(true)}>
+                +
               </Button>
             </div>
         </div>
@@ -84,7 +84,7 @@ export default function Navbar() {
           - "md:block" overrides hidden on medium+ screens (display: block)
           - "md:items-center md:space-x-3" adds flexbox alignment and spacing on desktop
         */}
-        <div className="hidden md:block md:items-center md:space-x-3">
+        <div className="hidden md:flex md:items-center md:space-x-2">
           {navItems.map((item) => (
             <Button key={item.href} variant="badge" asChild>
               <Link href={item.href}>{item.label}</Link>

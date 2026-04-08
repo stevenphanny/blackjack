@@ -67,10 +67,9 @@ export default function BuyChipsDialog({
         </Button>
 
         <AlertDialogHeader>
-          <AlertDialogTitle>Buy More Chips</AlertDialogTitle>
+          <AlertDialogTitle className="font-[family-name:var(--font-playfair)] text-xl tracking-wide text-white">Buy More Chips</AlertDialogTitle>
           <AlertDialogDescription>
-            Current balance: <strong>{currentChips} chips</strong>
-            
+            Current balance: <span className="text-[#c9a84c] font-semibold">{currentChips} chips</span>
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -81,7 +80,7 @@ export default function BuyChipsDialog({
               variant="outline"
               onClick={() => handlePurchase(option.amount)}
               disabled={isLoading}
-              className="flex flex-col h-auto py-3 hover:bg-primary hover:text-primary-foreground"
+              className="flex flex-col h-auto py-3 border-[#c9a84c]/30 hover:border-[#c9a84c] hover:bg-[#c9a84c]/10 text-white transition-colors"
             >
               <span className="font-semibold">{option.label}</span>
             </Button>

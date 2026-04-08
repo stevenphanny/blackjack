@@ -59,12 +59,11 @@ export default function HistoryPage() {
    */
   function formatResult(result) {
     const resultMap = {
-      win: { text: 'Win', className: 'text-green-400' },   // Green for wins
-      loss: { text: 'Loss', className: 'text-red-400' },   // Red for losses
-      push: { text: 'Push', className: 'text-yellow-400' } // Yellow for ties/pushes
+      win: { text: 'Win', className: 'text-[#c9a84c]' },
+      loss: { text: 'Loss', className: 'text-red-400' },
+      push: { text: 'Push', className: 'text-yellow-400' }
     }
-    // Return mapped result or fallback to gray for unknown results
-    return resultMap[result] || { text: result, className: 'text-gray-400' }
+    return resultMap[result] || { text: result, className: 'text-white/40' }
   }
 
   /**
@@ -188,30 +187,30 @@ export default function HistoryPage() {
             ← Back to Game
           </Button>
         </Link>
-        <h1 className="text-4xl font-bold text-white">Game History</h1>
+        <h1 className="font-[family-name:var(--font-playfair)] text-3xl font-bold text-white tracking-wide">Game History</h1>
       </div>
 
       {/* Summary Statistics - only show if user has played games */}
       {games.length > 0 && (
         <div className="w-full max-w-2xl my-2 grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Total number of games played card*/}
-          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 text-center">
+          <div className="bg-white/4 border border-white/10 rounded-lg p-4 text-center">
             <div className="text-2xl font-bold text-white">{games.length}</div>
-            <div className="text-gray-400">Total Games</div>
+            <div className="text-white/50 text-sm mt-1">Total Games</div>
           </div>
           {/* Number of wins card */}
-          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-green-400">
+          <div className="bg-white/4 border border-white/10 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-[#c9a84c]">
               {games.filter(g => g.result === 'win').length}
             </div>
-            <div className="text-gray-400">Wins</div>
+            <div className="text-white/50 text-sm mt-1">Wins</div>
           </div>
           {/* Win percentage calculation card */}
-          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 text-center">
+          <div className="bg-white/4 border border-white/10 rounded-lg p-4 text-center">
             <div className="text-2xl font-bold text-white">
               {games.length > 0 ? Math.round((games.filter(g => g.result === 'win').length / games.length) * 100) : 0}%
             </div>
-            <div className="text-gray-400">Win Rate</div>
+            <div className="text-white/50 text-sm mt-1">Win Rate</div>
           </div>
         </div>
       )}
@@ -221,7 +220,7 @@ export default function HistoryPage() {
         {games.length === 0 ? (
           /* Empty state when no games have been played */
           <div className="text-center py-12">
-            <div className="text-gray-400 text-lg">No games played yet</div>
+            <div className="text-white/40 text-lg font-[family-name:var(--font-playfair)] italic">No games played yet</div>
             <Link href="/">
               <Button className="mt-4">Play Your First Game</Button>
             </Link>
@@ -230,49 +229,33 @@ export default function HistoryPage() {
           <>
             {/* List of paginated game history cards */}
             <div className="space-y-3">
-              {/* Map through each paginated game and create a card for it */}
               {paginationData.currentGames.map((game, index) => {
                 const resultInfo = formatResult(game.result)
                 return (
                   <div
                     key={game.id || index}
-                    className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 flex items-center justify-between"
+                    className="bg-white/4 border border-white/10 rounded-lg p-4 flex items-center justify-between hover:bg-white/7 transition-colors"
                   >
                     {/* Left side: Game details */}
                     <div className="flex items-center gap-4">
-                      {/* Game date and time */}
-                      <div className="row">
-                        <div className='col text-sm text-gray-400 font-semibold'>
-                          Date
-                        </div>
-                        <div className='col text-sm font-bold'>{new Date(game.createdAt || game.timestamp).toLocaleDateString()} {' '}{new Date(game.createdAt || game.timestamp).toLocaleTimeString()}</div>
+                      <div>
+                        <div className="text-xs text-white/40 font-semibold">Date</div>
+                        <div className="text-sm font-medium text-white/80">{new Date(game.createdAt || game.timestamp).toLocaleDateString()} {new Date(game.createdAt || game.timestamp).toLocaleTimeString()}</div>
                       </div>
-
-                      {/* Bet amount */}
-                      <div className="row mx-4">
-                        <div className='col text-sm text-gray-400 font-semibold'>
-                          Bet
-                        </div>
-                        <div className='col text-sm font-bold'>{game.bet} chips</div>
+                      <div className="mx-2">
+                        <div className="text-xs text-white/40 font-semibold">Bet</div>
+                        <div className="text-sm font-medium text-white/80">{game.bet} chips</div>
                       </div>
-
-
-                      {/* Final hand totals */}
-                      <div className="row mx-4">
-                        <div className='col text-sm text-gray-400 font-semibold'>
-                          Score
-                        </div>
-                        <div className='col text-sm font-bold'>You: {game.playerTotal} | Dealer: {game.dealerTotal}</div>
+                      <div className="mx-2">
+                        <div className="text-xs text-white/40 font-semibold">Score</div>
+                        <div className="text-sm font-medium text-white/80">You: {game.playerTotal} | Dealer: {game.dealerTotal}</div>
                       </div>
-
                     </div>
-                    
+
                     {/* Right side: Result and chip change */}
-                    <div className="row mx-4">
-                      <div className='col text-sm text-gray-400 font-semibold'>
-                        Result
-                      </div>
-                      <div className={`col text-md font-bold ${resultInfo.className}`}>{resultInfo.text} ({game.delta > 0 ? '+' : game.delta === 0 ? '=' : ''}{game.delta})</div>
+                    <div className="mx-2 text-right">
+                      <div className="text-xs text-white/40 font-semibold">Result</div>
+                      <div className={`text-sm font-bold ${resultInfo.className}`}>{resultInfo.text} ({game.delta > 0 ? '+' : game.delta === 0 ? '±' : ''}{game.delta})</div>
                     </div>
                   </div>
                 )
@@ -280,7 +263,7 @@ export default function HistoryPage() {
             </div>
 
             {/* Pagination info */}
-            <div className="text-center text-xs mt-5 text-gray-400">
+            <div className="text-center text-xs mt-5 text-white/40">
               Showing {((currentPage - 1) * gamesPerPage) + 1} to {Math.min(currentPage * gamesPerPage, games.length)} of {games.length} games
             </div>
             
